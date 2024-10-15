@@ -5,7 +5,7 @@ from flask_session import Session
 app = Flask(__name__, static_folder="static", template_folder="static")
 
 # Replace this with your actual OpenAI API key
-openai.api_key = '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'
+openai.api_key = 'API_KEY'
 app.config['SESSION_TYPE'] = 'filesystem'  # Use filesystem to store session data
 app.config['SECRET_KEY'] = 'supersecretkey'  # Change this to a secure random key in production
 Session(app)  # Initialize the session extension
