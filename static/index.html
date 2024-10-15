@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 400px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .chat-header {
+            padding: 20px;
+            background-color: #4caf50;
+            color: white;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            text-align: center;
+            font-size: 20px;
+        }
+        .chat-box {
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .user-message, .bot-message {
+            margin: 10px 0;
+            display: inline-block;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #dcf8c6;
+            align-self: flex-end;
+        }
+        .bot-message {
+            background-color: #eee;
+            align-self: flex-start;
+        }
+        .input-box {
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            background-color: #f1f1f1;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        .input-box input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        .input-box button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin-left: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">Chat with AI</div>
+        <div class="chat-box" id="chatbox">
+            <!-- Chat messages will appear here -->
+        </div>
+        <div class="input-box">
+            <input type="text" id="userInput" placeholder="Type a message..." onkeypress="checkEnter(event)">
+            <button onclick="sendQuestion()"><i class="fas fa-paper-plane"></i> Send</button>
+            <button onclick="resetChat()">Reset Chat</button> <!-- Reset Chat Button -->
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        // Function to send a user question to the chatbot
+        function sendQuestion() {
+            var question = document.getElementById("userInput").value.trim();
+
+            if (question === "") {
+                return;
+            }
+
+            // Display the user's message
+            var userMessageDiv = document.createElement('div');
+            userMessageDiv.classList.add('user-message');
+            userMessageDiv.textContent = question;
+            document.getElementById("chatbox").appendChild(userMessageDiv);
+            document.getElementById("chatbox").scrollTop = document.getElementById("chatbox").scrollHeight;
+
+            // Clear the input field
+            document.getElementById("userInput").value = "";
+
+            // Send the message to the Flask backend
+            $.ajax({
+                url: "/chat",
+                type: "POST",
+                data: { 'question': question },
+                success: function(response) {
+                    // Display the bot's response
+                    var botMessageDiv = document.createElement('div');
+                    botMessageDiv.classList.add('bot-message');
+                    botMessageDiv.textContent = response;
+                    document.getElementById("chatbox").appendChild(botMessageDiv);
+                    document.getElementById("chatbox").scrollTop = document.getElementById("chatbox").scrollHeight;
+                },
+                error: function(xhr) {
+                    // Display error message in the chatbox
+                    var errorMessage = "An error occurred. Please try again.";
+                    if (xhr.responseText) {
+                        errorMessage = xhr.responseText;
+                    }
+                    var errorDiv = document.createElement('div');
+                    errorDiv.classList.add('bot-message');
+                    errorDiv.textContent = errorMessage;
+                    document.getElementById("chatbox").appendChild(errorDiv);
+                    document.getElementById("chatbox").scrollTop = document.getElementById("chatbox").scrollHeight;
+                }
+            });
+        }
+
+        // Function to trigger sending a question when Enter is pressed
+        function checkEnter(event) {
+            if (event.key === "Enter") {
+                sendQuestion();
+            }
+        }
+
+        // Function to display the initial greeting message
+        function displayGreeting() {
+            var greetingMessageDiv = document.createElement('div');
+            greetingMessageDiv.classList.add('bot-message');
+            greetingMessageDiv.textContent = "Hello! How can I assist you today?";
+            document.getElementById("chatbox").appendChild(greetingMessageDiv);
+            document.getElementById("chatbox").scrollTop = document.getElementById("chatbox").scrollHeight;
+        }
+
+        // Function to reset the chat history
+        function resetChat() {
+            // Make an AJAX POST request to reset the chat history
+            $.ajax({
+                url: "/reset",
+                type: "POST",
+                success: function(response) {
+                    document.getElementById("chatbox").innerHTML = ""; // Clear the chatbox
+                    displayGreeting();  // Show the greeting message again
+                    alert(response);  // Notify the user
+                },
+                error: function() {
+                    alert("Error resetting chat history.");
+                }
+            });
+        }
+
+        // Display the greeting message when the page loads
+        window.onload = displayGreeting;
+    </script>
+</body>
+</html>
